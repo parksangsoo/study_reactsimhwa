@@ -5,9 +5,10 @@ import { setCookie, getCookie, deleteCookie } from "../../shared/Cookie";
 import { auth } from "../../shared/firebase";
 import firebase from "firebase/app";
 
+const LOG_OUT = "LOG_OUT";
 const SignUp_USER = "SignUp_USER";
 
-
+const logOut = createAction(LOG_OUT, (user) => ({ user }));
 const signupUser = createAction(SignUp_USER, (user_info) => ({user_info}));
 
 const initialState = {
@@ -85,6 +86,34 @@ const signupFB = (id, pwd, user_name) => {
     }
   }
 
+  const logoutFB = () => {
+    return function (dispatch, getState, {history}) {
+      auth.signOut().then(() => {
+        dispatch(logOut());
+        history.replace('/');
+      })
+    }
+  }
+
+  const loginCheckFB = () => {
+    return function (dispatch, getState, {history}){
+      auth.onAuthStateChanged((user) => {
+        if(user){
+          dispatch(
+            signupUser({
+              user_name: user.displayName,
+              user_profile: "",
+              id: user.email,
+              uid: user.uid,
+            })
+          );
+        }else{
+          dispatch(logOut());
+        }
+      })
+    }
+  }
+
 export default handleActions(
     {
         [SignUp_USER]: (state, action) => 
@@ -99,8 +128,10 @@ export default handleActions(
 )
 
 const actionCreators = {
+    logoutFB,
     signupFB,
-    loginFB
+    loginFB,
+    loginCheckFB
 }
 
 export {actionCreators};
